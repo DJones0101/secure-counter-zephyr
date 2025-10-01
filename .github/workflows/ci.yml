@@ -99,39 +99,57 @@ jobs:
       - name: Coverage (native_sim only)
         if: matrix.do_coverage
         working-directory: ${{ github.workspace }}/zephyrproject
+        shell: bash
         run: |
+          set -euo pipefail
+          APP_DIR="$GITHUB_WORKSPACE/apps/secure_counter"
+          BUILD_DIR="$GITHUB_WORKSPACE/build/secure_counter_cov"
+
           # Build with coverage overlay
           west build -b native_sim \
-            -s "$GITHUB_WORKSPACE/apps/secure_counter" \
-            -d "$GITHUB_WORKSPACE/build/secure_counter_cov" \
-            -- -DOVERLAY_CONFIG="$GITHUB_WORKSPACE/apps/secure_counter/overlay-coverage.conf"
+            -s "$APP_DIR" \
+            -d "$BUILD_DIR" \
+            -- -DOVERLAY_CONFIG="$APP_DIR/overlay-coverage.conf"
 
-          # Run briefly to produce .gcda files
-          timeout 8s ninja -C "$GITHUB_WORKSPACE/build/secure_counter_cov" run || true
+          # Run briefly to generate .gcda files (timeout is OK)
+          timeout 8s ninja -C "$BUILD_DIR" run || true
 
-          # Capture coverage (raw)
+          # 1) Capture everything
           lcov --capture \
-            --directory "$GITHUB_WORKSPACE/build/secure_counter_cov/zephyr" \
-            --output-file "$GITHUB_WORKSPACE/coverage.full.info"
+               --directory "$BUILD_DIR/zephyr" \
+               --output-file "$GITHUB_WORKSPACE/coverage.full.info"
 
-          # Try absolute path extraction first
+          echo "== A few SF entries from coverage.full.info =="
+          grep '^SF:' "$GITHUB_WORKSPACE/coverage.full.info" | head -n 30 || true
+
+          # 2) Try several patterns to isolate just the app files
+          #    (Zephyr sometimes rewrites paths; we handle common variants)
           lcov --extract "$GITHUB_WORKSPACE/coverage.full.info" \
-            "$GITHUB_WORKSPACE/apps/secure_counter/*" \
-            -o "$GITHUB_WORKSPACE/coverage.app.info" || true
+               "$APP_DIR/*" "*/apps/secure_counter/*" "*CMAKE_SOURCE_DIR/*" \
+               -o "$GITHUB_WORKSPACE/coverage.app.info" || true
 
-          # Fallback: rewrite CMAKE_SOURCE_DIR paths, then extract
+          # 3) If still empty, rewrite placeholder prefixes and try again
           if ! grep -q '^SF:' "$GITHUB_WORKSPACE/coverage.app.info"; then
-            sed "s#CMAKE_SOURCE_DIR#${GITHUB_WORKSPACE}/apps/secure_counter#g" \
+            sed -E "s#CMAKE_SOURCE_DIR#${APP_DIR}#g; s#WEST_TOPDIR/[^/]*/apps/secure_counter#${APP_DIR}#g" \
               "$GITHUB_WORKSPACE/coverage.full.info" > "$GITHUB_WORKSPACE/coverage.rewritten.info"
+
             lcov --extract "$GITHUB_WORKSPACE/coverage.rewritten.info" \
-              "$GITHUB_WORKSPACE/apps/secure_counter/*" \
-              -o "$GITHUB_WORKSPACE/coverage.app.info"
+                 "$APP_DIR/*" "*/apps/secure_counter/*" \
+                 -o "$GITHUB_WORKSPACE/coverage.app.info" || true
           fi
 
-          # Generate HTML
-          genhtml "$GITHUB_WORKSPACE/coverage.app.info" \
-            --output-directory "$GITHUB_WORKSPACE/coverage-report" \
-            --title "Secure Counter coverage"
+          # 4) Generate HTML – app-only if we have it, otherwise full report
+          if grep -q '^SF:' "$GITHUB_WORKSPACE/coverage.app.info"; then
+            echo "Generating APP-ONLY coverage HTML"
+            genhtml "$GITHUB_WORKSPACE/coverage.app.info" \
+              --output-directory "$GITHUB_WORKSPACE/coverage-report" \
+              --title "Secure Counter (app-only)"
+          else
+            echo "No app files matched; generating FULL coverage HTML"
+            genhtml "$GITHUB_WORKSPACE/coverage.full.info" \
+              --output-directory "$GITHUB_WORKSPACE/coverage-report" \
+              --title "Secure Counter (full)"
+          fi
 
       - name: Upload coverage HTML
         if: matrix.do_coverage
