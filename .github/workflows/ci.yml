@@ -39,17 +39,26 @@ jobs:
           pip3 install west
 
       - name: Initialize Zephyr workspace
-        run: |
-          mkdir -p "$GITHUB_WORKSPACE/zephyrproject"
-          west init -m https://github.com/zephyrproject-rtos/zephyr --mr "$ZEPHYR_VERSION" "$GITHUB_WORKSPACE/zephyrproject"
         working-directory: ${{ github.workspace }}
+        run: |
+          mkdir -p zephyrproject
+          west init -m https://github.com/zephyrproject-rtos/zephyr --mr "$ZEPHYR_VERSION" zephyrproject
 
       - name: Update Zephyr modules
+        working-directory: ${{ github.workspace }}/zephyrproject
         run: |
           west update
           west zephyr-export
           pip3 install -r zephyr/scripts/requirements.txt
+
+      # Remove "dubious ownership" / exit code 128 warnings from git in nested repos
+      - name: Mark Zephyr repos as safe for git
         working-directory: ${{ github.workspace }}/zephyrproject
+        run: |
+          for d in $(git rev-parse --show-toplevel 2>/dev/null || true) \
+                   $(find "$GITHUB_WORKSPACE/zephyrproject" -name .git -type d -prune -print | sed 's|/.git$||'); do
+            git config --global --add safe.directory "$d" || true
+          done
 
       # Toolchain selection per matrix
       - name: Use Zephyr SDK toolchain
@@ -67,31 +76,33 @@ jobs:
         run: echo "ZEPHYR_TOOLCHAIN_VARIANT=host" >> "$GITHUB_ENV"
 
       - name: Sanity check west workspace
+        working-directory: ${{ github.workspace }}/zephyrproject
         run: |
           west topdir
           west --version
-        working-directory: ${{ github.workspace }}/zephyrproject
 
       - name: Build app
+        working-directory: ${{ github.workspace }}/zephyrproject
         run: |
           west build -b "${{ matrix.board }}" \
             -s "$GITHUB_WORKSPACE/apps/secure_counter" \
             -d "$GITHUB_WORKSPACE/build/${{ matrix.board }}"
-        working-directory: ${{ github.workspace }}/zephyrproject
 
       - name: Smoke run (short)
+        working-directory: ${{ github.workspace }}/zephyrproject
         run: |
           timeout 8s ninja -C "$GITHUB_WORKSPACE/build/${{ matrix.board }}" run || true
-        working-directory: ${{ github.workspace }}/zephyrproject
 
       - name: Run Twister (qemu_x86 only)
         if: matrix.board == 'qemu_x86'
-        run: |
-          ./scripts/twister -T "$GITHUB_WORKSPACE/apps/secure_counter/tests" -p qemu_x86 --jobs 2 -v
         working-directory: ${{ github.workspace }}/zephyrproject/zephyr
+        run: |
+          ./scripts/twister -T "$GITHUB_WORKSPACE/apps/secure_counter/tests" \
+            -p qemu_x86 --jobs 2 -v
 
       - name: Coverage (native_sim only)
         if: matrix.do_coverage == 'true'
+        working-directory: ${{ github.workspace }}/zephyrproject
         run: |
           # Build with coverage overlay
           west build -b native_sim \
@@ -99,25 +110,32 @@ jobs:
             -d "$GITHUB_WORKSPACE/build/secure_counter_cov" \
             -- -DOVERLAY_CONFIG="$GITHUB_WORKSPACE/apps/secure_counter/overlay-coverage.conf"
 
-          # Run briefly to generate .gcda files
+          # Run briefly to produce .gcda files
           timeout 8s ninja -C "$GITHUB_WORKSPACE/build/secure_counter_cov" run || true
 
-          # Capture coverage
-          lcov --capture --directory "$GITHUB_WORKSPACE/build/secure_counter_cov/zephyr" --output-file "$GITHUB_WORKSPACE/coverage.full.info"
+          # Capture coverage (raw)
+          lcov --capture \
+            --directory "$GITHUB_WORKSPACE/build/secure_counter_cov/zephyr" \
+            --output-file "$GITHUB_WORKSPACE/coverage.full.info"
 
-          # First try: extract app sources by absolute path
-          lcov --extract "$GITHUB_WORKSPACE/coverage.full.info" "$GITHUB_WORKSPACE/apps/secure_counter/*" -o "$GITHUB_WORKSPACE/coverage.app.info" || true
+          # Try absolute path extraction first
+          lcov --extract "$GITHUB_WORKSPACE/coverage.full.info" \
+            "$GITHUB_WORKSPACE/apps/secure_counter/*" \
+            -o "$GITHUB_WORKSPACE/coverage.app.info" || true
 
-          # Fallback: some builds record 'CMAKE_SOURCE_DIR' in paths; rewrite then extract
+          # Fallback: rewrite CMAKE_SOURCE_DIR paths, then extract
           if ! grep -q '^SF:' "$GITHUB_WORKSPACE/coverage.app.info"; then
             sed "s#CMAKE_SOURCE_DIR#${GITHUB_WORKSPACE}/apps/secure_counter#g" \
               "$GITHUB_WORKSPACE/coverage.full.info" > "$GITHUB_WORKSPACE/coverage.rewritten.info"
-            lcov --extract "$GITHUB_WORKSPACE/coverage.rewritten.info" "$GITHUB_WORKSPACE/apps/secure_counter/*" -o "$GITHUB_WORKSPACE/coverage.app.info"
+            lcov --extract "$GITHUB_WORKSPACE/coverage.rewritten.info" \
+              "$GITHUB_WORKSPACE/apps/secure_counter/*" \
+              -o "$GITHUB_WORKSPACE/coverage.app.info"
           fi
 
           # Generate HTML
-          genhtml "$GITHUB_WORKSPACE/coverage.app.info" --output-directory "$GITHUB_WORKSPACE/coverage-report" --title "Secure Counter coverage"
-        working-directory: ${{ github.workspace }}/zephyrproject
+          genhtml "$GITHUB_WORKSPACE/coverage.app.info" \
+            --output-directory "$GITHUB_WORKSPACE/coverage-report" \
+            --title "Secure Counter coverage"
 
       - name: Upload coverage HTML
         if: matrix.do_coverage == 'true'
@@ -125,6 +143,17 @@ jobs:
         with:
           name: coverage-html
           path: coverage-report
+          if-no-files-found: warn
+
+      - name: Upload lcov files
+        if: matrix.do_coverage == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: lcov-files
+          path: |
+            coverage.full.info
+            coverage.app.info
+            coverage.rewritten.info
           if-no-files-found: warn
 
       - name: Upload Twister report
