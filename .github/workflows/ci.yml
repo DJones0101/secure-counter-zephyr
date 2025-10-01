@@ -1,5 +1,7 @@
 name: Zephyr CI
-on: [push, pull_request]
+on:
+  push:
+  pull_request:
 
 env:
   ZEPHYR_VERSION: v4.2.0
@@ -9,19 +11,21 @@ jobs:
   build-test-and-coverage:
     runs-on: ubuntu-22.04
     strategy:
+      fail-fast: false
       matrix:
         include:
           - board: qemu_x86
             toolchain: zephyr
             do_coverage: false
-          - board: native_sim/native/64
+          - board: native_sim
             toolchain: host
             do_coverage: true
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repo
+        uses: actions/checkout@v4
 
-      - name: Install base deps
+      - name: Install base deps (apt)
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
@@ -31,62 +35,89 @@ jobs:
 
       - name: Install west
         run: |
-          pip3 install --upgrade pip
+          python3 -m pip install --upgrade pip
           pip3 install west
 
-      - name: Init Zephyr workspace
+      - name: Initialize Zephyr workspace
         run: |
-          mkdir -p $GITHUB_WORKSPACE/zephyrproject
-          west init -m https://github.com/zephyrproject-rtos/zephyr --mr $ZEPHYR_VERSION $GITHUB_WORKSPACE/zephyrproject
-          cd $GITHUB_WORKSPACE/zephyrproject
+          mkdir -p "$GITHUB_WORKSPACE/zephyrproject"
+          west init -m https://github.com/zephyrproject-rtos/zephyr --mr "$ZEPHYR_VERSION" "$GITHUB_WORKSPACE/zephyrproject"
+        working-directory: ${{ github.workspace }}
+
+      - name: Update Zephyr modules
+        run: |
           west update
           west zephyr-export
           pip3 install -r zephyr/scripts/requirements.txt
+        working-directory: ${{ github.workspace }}/zephyrproject
 
-      - name: Install Zephyr SDK (for zephyr toolchain)
+      # Toolchain selection per matrix
+      - name: Use Zephyr SDK toolchain
         if: matrix.toolchain == 'zephyr'
         run: |
-          cd $HOME
+          cd "$HOME"
           wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VER}/zephyr-sdk-${ZSDK_VER}_linux-x86_64.tar.xz
           tar -xJf zephyr-sdk-${ZSDK_VER}_linux-x86_64.tar.xz
-          ${HOME}/zephyr-sdk-${ZSDK_VER}/setup.sh -t all -h -c
-          echo "ZEPHYR_TOOLCHAIN_VARIANT=zephyr" >> $GITHUB_ENV
-          echo "ZEPHYR_SDK_INSTALL_DIR=${HOME}/zephyr-sdk-${ZSDK_VER}" >> $GITHUB_ENV
+          "${HOME}/zephyr-sdk-${ZSDK_VER}/setup.sh" -t all -h -c
+          echo "ZEPHYR_TOOLCHAIN_VARIANT=zephyr" >> "$GITHUB_ENV"
+          echo "ZEPHYR_SDK_INSTALL_DIR=${HOME}/zephyr-sdk-${ZSDK_VER}" >> "$GITHUB_ENV"
 
       - name: Use host toolchain (for native_sim)
         if: matrix.toolchain == 'host'
-        run: echo "ZEPHYR_TOOLCHAIN_VARIANT=host" >> $GITHUB_ENV
+        run: echo "ZEPHYR_TOOLCHAIN_VARIANT=host" >> "$GITHUB_ENV"
+
+      - name: Sanity check west workspace
+        run: |
+          west topdir
+          west --version
+        working-directory: ${{ github.workspace }}/zephyrproject
 
       - name: Build app
         run: |
           west build -b "${{ matrix.board }}" \
-            -s $GITHUB_WORKSPACE/apps/secure_counter \
-            -d $GITHUB_WORKSPACE/build/${{ matrix.board }}
+            -s "$GITHUB_WORKSPACE/apps/secure_counter" \
+            -d "$GITHUB_WORKSPACE/build/${{ matrix.board }}"
+        working-directory: ${{ github.workspace }}/zephyrproject
 
       - name: Smoke run (short)
-        run: timeout 8s ninja -C $GITHUB_WORKSPACE/build/${{ matrix.board }} run || true
+        run: |
+          timeout 8s ninja -C "$GITHUB_WORKSPACE/build/${{ matrix.board }}" run || true
+        working-directory: ${{ github.workspace }}/zephyrproject
 
       - name: Run Twister (qemu_x86 only)
         if: matrix.board == 'qemu_x86'
         run: |
-          cd $GITHUB_WORKSPACE/zephyrproject/zephyr
-          ./scripts/twister -T $GITHUB_WORKSPACE/apps/secure_counter/tests -p qemu_x86 --jobs 2 -v
+          ./scripts/twister -T "$GITHUB_WORKSPACE/apps/secure_counter/tests" -p qemu_x86 --jobs 2 -v
+        working-directory: ${{ github.workspace }}/zephyrproject/zephyr
 
       - name: Coverage (native_sim only)
         if: matrix.do_coverage == 'true'
         run: |
-          west build -b native_sim/native/64 \
-            -s $GITHUB_WORKSPACE/apps/secure_counter \
-            -d $GITHUB_WORKSPACE/build/secure_counter_cov \
-            -- -DOVERLAY_CONFIG=$GITHUB_WORKSPACE/apps/secure_counter/overlay-coverage.conf
-          timeout 8s ninja -C $GITHUB_WORKSPACE/build/secure_counter_cov run || true
-          lcov --capture --directory $GITHUB_WORKSPACE/build/secure_counter_cov/zephyr --output-file $GITHUB_WORKSPACE/coverage.full.info
-          lcov --remove $GITHUB_WORKSPACE/coverage.full.info \
-            '*/ZEPHYR_BASE/*' '*/WEST_TOPDIR/*' '*/build/*' '/usr/*' '*/include/generated/*' \
-            -o $GITHUB_WORKSPACE/coverage.stripped.info
-          sed "s#CMAKE_SOURCE_DIR#${GITHUB_WORKSPACE}/apps/secure_counter#g" \
-            $GITHUB_WORKSPACE/coverage.stripped.info > $GITHUB_WORKSPACE/coverage.app.info
-          genhtml $GITHUB_WORKSPACE/coverage.app.info --output-directory $GITHUB_WORKSPACE/coverage-report --title "Secure Counter coverage"
+          # Build with coverage overlay
+          west build -b native_sim \
+            -s "$GITHUB_WORKSPACE/apps/secure_counter" \
+            -d "$GITHUB_WORKSPACE/build/secure_counter_cov" \
+            -- -DOVERLAY_CONFIG="$GITHUB_WORKSPACE/apps/secure_counter/overlay-coverage.conf"
+
+          # Run briefly to generate .gcda files
+          timeout 8s ninja -C "$GITHUB_WORKSPACE/build/secure_counter_cov" run || true
+
+          # Capture coverage
+          lcov --capture --directory "$GITHUB_WORKSPACE/build/secure_counter_cov/zephyr" --output-file "$GITHUB_WORKSPACE/coverage.full.info"
+
+          # First try: extract app sources by absolute path
+          lcov --extract "$GITHUB_WORKSPACE/coverage.full.info" "$GITHUB_WORKSPACE/apps/secure_counter/*" -o "$GITHUB_WORKSPACE/coverage.app.info" || true
+
+          # Fallback: some builds record 'CMAKE_SOURCE_DIR' in paths; rewrite then extract
+          if ! grep -q '^SF:' "$GITHUB_WORKSPACE/coverage.app.info"; then
+            sed "s#CMAKE_SOURCE_DIR#${GITHUB_WORKSPACE}/apps/secure_counter#g" \
+              "$GITHUB_WORKSPACE/coverage.full.info" > "$GITHUB_WORKSPACE/coverage.rewritten.info"
+            lcov --extract "$GITHUB_WORKSPACE/coverage.rewritten.info" "$GITHUB_WORKSPACE/apps/secure_counter/*" -o "$GITHUB_WORKSPACE/coverage.app.info"
+          fi
+
+          # Generate HTML
+          genhtml "$GITHUB_WORKSPACE/coverage.app.info" --output-directory "$GITHUB_WORKSPACE/coverage-report" --title "Secure Counter coverage"
+        working-directory: ${{ github.workspace }}/zephyrproject
 
       - name: Upload coverage HTML
         if: matrix.do_coverage == 'true'
