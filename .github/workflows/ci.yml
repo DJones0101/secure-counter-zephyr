@@ -1,0 +1,105 @@
+name: Zephyr CI
+on: [push, pull_request]
+
+env:
+  ZEPHYR_VERSION: v4.2.0
+  ZSDK_VER: 0.16.8
+
+jobs:
+  build-test-and-coverage:
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        include:
+          - board: qemu_x86
+            toolchain: zephyr
+            do_coverage: false
+          - board: native_sim/native/64
+            toolchain: host
+            do_coverage: true
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install base deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            git cmake ninja-build ccache gperf dfu-util device-tree-compiler \
+            wget python3-pip python3-setuptools python3-wheel xz-utils file make \
+            gcc g++ libsdl2-dev lcov gcc-multilib g++-multilib
+
+      - name: Install west
+        run: |
+          pip3 install --upgrade pip
+          pip3 install west
+
+      - name: Init Zephyr workspace
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/zephyrproject
+          west init -m https://github.com/zephyrproject-rtos/zephyr --mr $ZEPHYR_VERSION $GITHUB_WORKSPACE/zephyrproject
+          cd $GITHUB_WORKSPACE/zephyrproject
+          west update
+          west zephyr-export
+          pip3 install -r zephyr/scripts/requirements.txt
+
+      - name: Install Zephyr SDK (for zephyr toolchain)
+        if: matrix.toolchain == 'zephyr'
+        run: |
+          cd $HOME
+          wget -q https://github.com/zephyrproject-rtos/sdk-ng/releases/download/v${ZSDK_VER}/zephyr-sdk-${ZSDK_VER}_linux-x86_64.tar.xz
+          tar -xJf zephyr-sdk-${ZSDK_VER}_linux-x86_64.tar.xz
+          ${HOME}/zephyr-sdk-${ZSDK_VER}/setup.sh -t all -h -c
+          echo "ZEPHYR_TOOLCHAIN_VARIANT=zephyr" >> $GITHUB_ENV
+          echo "ZEPHYR_SDK_INSTALL_DIR=${HOME}/zephyr-sdk-${ZSDK_VER}" >> $GITHUB_ENV
+
+      - name: Use host toolchain (for native_sim)
+        if: matrix.toolchain == 'host'
+        run: echo "ZEPHYR_TOOLCHAIN_VARIANT=host" >> $GITHUB_ENV
+
+      - name: Build app
+        run: |
+          west build -b "${{ matrix.board }}" \
+            -s $GITHUB_WORKSPACE/apps/secure_counter \
+            -d $GITHUB_WORKSPACE/build/${{ matrix.board }}
+
+      - name: Smoke run (short)
+        run: timeout 8s ninja -C $GITHUB_WORKSPACE/build/${{ matrix.board }} run || true
+
+      - name: Run Twister (qemu_x86 only)
+        if: matrix.board == 'qemu_x86'
+        run: |
+          cd $GITHUB_WORKSPACE/zephyrproject/zephyr
+          ./scripts/twister -T $GITHUB_WORKSPACE/apps/secure_counter/tests -p qemu_x86 --jobs 2 -v
+
+      - name: Coverage (native_sim only)
+        if: matrix.do_coverage == 'true'
+        run: |
+          west build -b native_sim/native/64 \
+            -s $GITHUB_WORKSPACE/apps/secure_counter \
+            -d $GITHUB_WORKSPACE/build/secure_counter_cov \
+            -- -DOVERLAY_CONFIG=$GITHUB_WORKSPACE/apps/secure_counter/overlay-coverage.conf
+          timeout 8s ninja -C $GITHUB_WORKSPACE/build/secure_counter_cov run || true
+          lcov --capture --directory $GITHUB_WORKSPACE/build/secure_counter_cov/zephyr --output-file $GITHUB_WORKSPACE/coverage.full.info
+          lcov --remove $GITHUB_WORKSPACE/coverage.full.info \
+            '*/ZEPHYR_BASE/*' '*/WEST_TOPDIR/*' '*/build/*' '/usr/*' '*/include/generated/*' \
+            -o $GITHUB_WORKSPACE/coverage.stripped.info
+          sed "s#CMAKE_SOURCE_DIR#${GITHUB_WORKSPACE}/apps/secure_counter#g" \
+            $GITHUB_WORKSPACE/coverage.stripped.info > $GITHUB_WORKSPACE/coverage.app.info
+          genhtml $GITHUB_WORKSPACE/coverage.app.info --output-directory $GITHUB_WORKSPACE/coverage-report --title "Secure Counter coverage"
+
+      - name: Upload coverage HTML
+        if: matrix.do_coverage == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage-report
+          if-no-files-found: warn
+
+      - name: Upload Twister report
+        if: matrix.board == 'qemu_x86'
+        uses: actions/upload-artifact@v4
+        with:
+          name: twister-out
+          path: zephyrproject/zephyr/twister-out
+          if-no-files-found: warn
