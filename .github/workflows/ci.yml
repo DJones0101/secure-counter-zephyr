@@ -25,6 +25,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      # ⬅️ Remove git 128 warnings everywhere in this job
+      - name: Make git trust this workspace
+        run: |
+          git config --global --add safe.directory '*'
+
       - name: Install base deps (apt)
         run: |
           sudo apt-get update
@@ -50,15 +55,6 @@ jobs:
           west update
           west zephyr-export
           pip3 install -r zephyr/scripts/requirements.txt
-
-      # Remove "dubious ownership" / exit code 128 warnings from git in nested repos
-      - name: Mark Zephyr repos as safe for git
-        working-directory: ${{ github.workspace }}/zephyrproject
-        run: |
-          for d in $(git rev-parse --show-toplevel 2>/dev/null || true) \
-                   $(find "$GITHUB_WORKSPACE/zephyrproject" -name .git -type d -prune -print | sed 's|/.git$||'); do
-            git config --global --add safe.directory "$d" || true
-          done
 
       # Toolchain selection per matrix
       - name: Use Zephyr SDK toolchain
@@ -101,7 +97,7 @@ jobs:
             -p qemu_x86 --jobs 2 -v
 
       - name: Coverage (native_sim only)
-        if: matrix.do_coverage == 'true'
+        if: matrix.do_coverage
         working-directory: ${{ github.workspace }}/zephyrproject
         run: |
           # Build with coverage overlay
@@ -138,7 +134,7 @@ jobs:
             --title "Secure Counter coverage"
 
       - name: Upload coverage HTML
-        if: matrix.do_coverage == 'true'
+        if: matrix.do_coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-html
@@ -146,7 +142,7 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload lcov files
-        if: matrix.do_coverage == 'true'
+        if: matrix.do_coverage
         uses: actions/upload-artifact@v4
         with:
           name: lcov-files
