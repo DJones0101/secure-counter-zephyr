@@ -1,0 +1,11 @@
+tests:
+  secure_counter.console:
+    platform_allow:
+      - qemu_x86
+    tags: counter shell userspace console
+    harness: console
+    harness_config:
+      type: one_line
+      regex:
+        - ".*secure_counter.*starting.*"
+    timeout: 60

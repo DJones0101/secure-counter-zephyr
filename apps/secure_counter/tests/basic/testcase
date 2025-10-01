@@ -1,0 +1,7 @@
+tests:
+  secure_counter.basic:
+    platform_allow:
+      - qemu_x86
+      - qemu_x86_64
+    tags: counter msgq shell userspace
+    build_only: true

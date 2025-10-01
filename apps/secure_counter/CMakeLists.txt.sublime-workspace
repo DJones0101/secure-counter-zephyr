@@ -1,0 +1,344 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "prj.conf",
+			"settings":
+			{
+				"buffer_size": 480,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "# Console & logging"
+			},
+			"undo_stack":
+			[
+				[
+					5,
+					1,
+					"paste",
+					null,
+					"AQAAAAAAAAAAAAAA3AEAAAAAAAAAAAAA",
+					"BAAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8L8AAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwvwAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/"
+				],
+				[
+					6,
+					1,
+					"paste",
+					null,
+					"AQAAAAAAAAAAAAAAJwIAAAAAAADcAQAAIyBDb25zb2xlICYgbG9nZ2luZwpDT05GSUdfUFJJTlRLPXkKQ09ORklHX0xPRz15CkNPTkZJR19MT0dfREVGQVVMVF9MRVZFTD0zCkNPTkZJR19MT0dfTU9ERV9ERUZFUlJFRD15CkNPTkZJR19DQlBSSU5URl9GUF9TVVBQT1JUPXkKQ09ORklHX0xPR19QUklOVEs9eQpDT05GSUdfTE9HX0JBQ0tFTkRfU0hPV19DT0xPUj15CkNPTkZJR19MT0dfVElNRVNUQU1QX1NPVVJDRV9SVD15CkNPTkZJR19MT0dfUFJPQ0VTU19USFJFQUQ9eQoKIyBLZXJuZWwgcHJpbWl0aXZlcwpDT05GSUdfTUFJTl9TVEFDS19TSVpFPTIwNDgKQ09ORklHX1NZU1RFTV9XT1JLUVVFVUVfU1RBQ0tfU0laRT0yMDQ4CkNPTkZJR19IRUFQX01FTV9QT09MX1NJWkU9MTYzODQKCiMgKFVzZXJzcGFjZSBjYW4gYmUgZW5hYmxlZCBsYXRlcikKIyBDT05GSUdfVVNFUlNQQUNFPXkKIyBDT05GSUdfRFlOQU1JQ19USFJFQUQ9eQojIENPTkZJR19HRU5fUFJJVl9TVEFDS1M9eQo",
+					"AwAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8L8AAAAAAQAAAAAAAAAAAAAA3AEAAAAAAAAAAAAAAADwvw"
+				],
+				[
+					4,
+					1,
+					"left_delete",
+					null,
+					"AQAAAAAAAAAAAAAAAAAAAAAAAAAnAgAAY2F0ID4gfi96ZXBoeXJwcm9qZWN0L2FwcHMvc2VjdXJlX2NvdW50ZXIvcHJqLmNvbmYgPDwgJ0VPRicKIyBDb25zb2xlICYgbG9nZ2luZwpDT05GSUdfUFJJTlRLPXkKQ09ORklHX0xPRz15CkNPTkZJR19MT0dfREVGQVVMVF9MRVZFTD0zCkNPTkZJR19MT0dfTU9ERV9ERUZFUlJFRD15CkNPTkZJR19DQlBSSU5URl9GUF9TVVBQT1JUPXkKQ09ORklHX0xPR19QUklOVEs9eQpDT05GSUdfTE9HX0JBQ0tFTkRfU0hPV19DT0xPUj15CiMgKHJlbW92ZWQgaW52YWxpZCBMT0dfVElNRVNUQU1QX1NPVVJDRV9SVCkKQ09ORklHX0xPR19QUk9DRVNTX1RIUkVBRD15CgojIEtlcm5lbCBwcmltaXRpdmVzCkNPTkZJR19NQUlOX1NUQUNLX1NJWkU9MjA0OApDT05GSUdfU1lTVEVNX1dPUktRVUVVRV9TVEFDS19TSVpFPTIwNDgKQ09ORklHX0hFQVBfTUVNX1BPT0xfU0laRT0xNjM4NAoKIyAoVXNlcnNwYWNlIGNhbiBiZSBlbmFibGVkIGxhdGVyKQojIENPTkZJR19VU0VSU1BBQ0U9eQojIENPTkZJR19EWU5BTUlDX1RIUkVBRD15CiMgQ09ORklHX0dFTl9QUklWX1NUQUNLUz15CkVPRgo",
+					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAAAAAAAAAAAACcCAAAAAAAAAAAAAAAA8L8"
+				],
+				[
+					7,
+					1,
+					"paste",
+					null,
+					"AQAAAAAAAAAAAAAAuwEAAAAAAAAAAAAA",
+					"AgAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8L8"
+				],
+				[
+					4,
+					1,
+					"paste",
+					null,
+					"AQAAAAAAAAAAAAAA4AEAAAAAAAC7AQAAIyBDb25zb2xlICYgbG9nZ2luZwpDT05GSUdfUFJJTlRLPXkKQ09ORklHX0xPRz15CkNPTkZJR19MT0dfREVGQVVMVF9MRVZFTD0zCkNPTkZJR19MT0dfTU9ERV9ERUZFUlJFRD15CkNPTkZJR19DQlBSSU5URl9GUF9TVVBQT1JUPXkKQ09ORklHX0xPR19QUklOVEs9eQpDT05GSUdfTE9HX0JBQ0tFTkRfU0hPV19DT0xPUj15CkNPTkZJR19MT0dfUFJPQ0VTU19USFJFQUQ9eQoKIyBLZXJuZWwgcHJpbWl0aXZlcwpDT05GSUdfTUFJTl9TVEFDS19TSVpFPTIwNDgKQ09ORklHX1NZU1RFTV9XT1JLUVVFVUVfU1RBQ0tfU0laRT0yMDQ4CkNPTkZJR19IRUFQX01FTV9QT09MX1NJWkU9MTYzODQKCiMgKFVzZXJzcGFjZSBjYW4gYmUgZW5hYmxlZCBsYXRlcikKIyBDT05GSUdfVVNFUlNQQUNFPXkKIyBDT05GSUdfRFlOQU1JQ19USFJFQUQ9eQojIENPTkZJR19HRU5fUFJJVl9TVEFDS1M9eQo",
+					"AQAAAAAAAAABAAAAAAAAAAAAAAC7AQAAAAAAAAAAAAAAAPC/"
+				]
+			]
+		},
+		{
+			"file": "src/main.c",
+			"settings":
+			{
+				"buffer_size": 2300,
+				"encoding": "UTF-8",
+				"line_ending": "Windows",
+				"name": "#include <zephyr/kernel.h>"
+			},
+			"undo_stack":
+			[
+				[
+					3,
+					1,
+					"paste",
+					null,
+					"AQAAAAAAAAAAAAAA/AgAAAAAAAAAAAAA",
+					"AwAAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPC/AAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA8L8AAAAAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAADwvw"
+				]
+			]
+		},
+		{
+			"file": "/C/Users/dariu/Desktop/CMakeLists.txt.txt",
+			"settings":
+			{
+				"buffer_size": 157,
+				"encoding": "UTF-8",
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+	],
+	"find":
+	{
+		"height": 0.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+		],
+		"reverse": false,
+		"scrollbar_highlights": true,
+		"show_context": true,
+		"use_buffer2": true,
+		"use_gitignore": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "prj.conf",
+					"selected": true,
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 480,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								322,
+								322
+							]
+						],
+						"settings":
+						{
+							"auto_name": "# Console & logging",
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/main.c",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2300,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2300,
+								2300
+							]
+						],
+						"settings":
+						{
+							"auto_name": "#include <zephyr/kernel.h>",
+							"syntax": "Packages/C++/C.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 216.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"stack_multiselect": false,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/C/Users/dariu/Desktop/CMakeLists.txt.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 157,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								157,
+								157
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"stack_multiselect": false,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 0.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.find_results":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"pinned_build_system": "",
+	"project": "CMakeLists.txt.sublime-project",
+	"replace":
+	{
+		"height": 0.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
